@@ -1,5 +1,6 @@
 import org.junit.Test;
 
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -7,23 +8,22 @@ import java.util.Map;
 import static org.junit.Assert.*;
 
 public class SocialNetworkTest {
-    // @Test
+    @Test
     public void loadGraphFromDataSet() {
         SocialNetwork socialNetwork = new SocialNetwork();
         int nodeCount = socialNetwork.loadGraphFromDataSet("./data/socfb-American75.mtx");
         assertEquals(6386, nodeCount);
     }
 
-    // @Test
+    @Test
     public void getShortestPathUnweightedTest() {
         SocialNetwork socialNetwork = new SocialNetwork();
         socialNetwork.loadGraphFromDataSet("./data/socfb-American75.mtx");
         int shortestPathUnweighted = socialNetwork.getShortestPathUnweighted(123, 456);
         assertEquals(8, shortestPathUnweighted);
-
     }
 
-    // @Test
+    @Test
     public void recommendationByDistance() {
         SocialNetwork socialNetwork = new SocialNetwork();
         socialNetwork.loadGraphFromDataSet("./data/socfb-American75.mtx");
@@ -31,7 +31,7 @@ public class SocialNetworkTest {
         assertEquals(438, recommendation.size());
     }
 
-    // @Test
+    @Test
     public void loadUserInterestsTest() {
         SocialNetwork socialNetwork = new SocialNetwork();
         socialNetwork.loadGraphFromDataSet("./data/socfb-American75.mtx");
@@ -40,7 +40,7 @@ public class SocialNetworkTest {
         assertEquals(6386, interestsByUser.size());
     }
 
-    // @Test
+    @Test
     public void clusterUserByInterest() {
         SocialNetwork socialNetwork = new SocialNetwork();
         socialNetwork.loadGraphFromDataSet("./data/socfb-American75.mtx");
@@ -52,7 +52,7 @@ public class SocialNetworkTest {
 
     }
 
-    // @Test
+    @Test
     public void getUsersInterestCluster() {
         SocialNetwork socialNetwork = new SocialNetwork();
         socialNetwork.loadGraphFromDataSet("./data/socfb-American75.mtx");
@@ -67,7 +67,7 @@ public class SocialNetworkTest {
 
     }
 
-    //@Test
+    @Test
     public void recommendationByInterest() {
         SocialNetwork socialNetwork = new SocialNetwork();
         socialNetwork.loadGraphFromDataSet("./data/socfb-American75.mtx");
@@ -80,7 +80,7 @@ public class SocialNetworkTest {
         assertEquals(expectedList2, recommendToUser1);
     }
     
-    // @Test
+    @Test
     public void loadPostsTest() {
         SocialNetwork socialNetwork = new SocialNetwork();
         socialNetwork.loadGraphFromDataSet("./data/socfb-American75.mtx");
@@ -94,7 +94,7 @@ public class SocialNetworkTest {
         SocialNetwork socialNetwork = new SocialNetwork();
         socialNetwork.loadGraphFromDataSet("./data/socfb-American75.mtx");
         Map<Integer, List<LikedPost>> posts = socialNetwork.loadPosts("./data/posts.txt");
-        Map<Integer, List<LikedPost>> res = socialNetwork.clusterUserByPost(posts);
+        Map<Integer, List<LikedPost>> res = socialNetwork.postByUser(posts);
         List<LikedPost> likes = res.get(1); 
         assertEquals(81, likes.size()); // test size 
         for (int i = 0; i < likes.size() - 1; i++) {  // test order 
@@ -104,8 +104,15 @@ public class SocialNetworkTest {
     
     @Test
     public void recommendPostTest() {
+        SocialNetwork socialNetwork = new SocialNetwork();
+        socialNetwork.loadGraphFromDataSet("./data/socfb-American75.mtx");
+        Map<Integer, List<LikedPost>> posts = socialNetwork.loadPosts("./data/posts.txt");
+        Map<Integer, List<LikedPost>> res = socialNetwork.postByUser(posts);
         
-        
+        long seconds = 180 * 86400; // 180 days 
+        Instant timestamp = Instant.now().minusSeconds(seconds); 
+        int size = socialNetwork.recommendPost(2, timestamp, res).keySet().size();
+        assertEquals(680, size);
         
     }
     
