@@ -97,14 +97,16 @@ public interface ISocialNetwork {
      * @param interestMap
      * @return
      */
-    public Map<Integer, List<LikedPost>> clusterUserByPost(Map<Integer, List<LikedPost>> posts);
+    public Map<Integer, List<LikedPost>> postByUser(Map<Integer, List<LikedPost>> posts);
 
     /**
-     * posts that my friends recently liked
-     * @param timeFrame
-     * @param userId
-     * @return
-     */
-    public List<Integer> recommendPost(int userId, Instant earliest,
+     * recommend posts that my friends recently liked
+     * @param userId: user to recommend post to 
+     * @param earliest: timeframe for getting activities 
+     * @param likedPosts: map returned from postByUser
+     * @return a map of post IDs and list of friends who liked them: 
+      *         ordered by the timeStamp of friends liking them 
+      */
+    public Map<Integer, List<Integer>> recommendPost(int userId, Instant earliest,
                                         Map<Integer, List<LikedPost>> likedPosts);
 }

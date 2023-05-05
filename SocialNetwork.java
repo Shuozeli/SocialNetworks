@@ -19,7 +19,6 @@ public class SocialNetwork implements ISocialNetwork {
     private int nNodes;
 
     
-
     /**
      * Create a graph representation of the dataset. The first line of the file
      * contains the number of nodes. Keep in mind that the vertex with id 0 is
@@ -328,11 +327,6 @@ public class SocialNetwork implements ISocialNetwork {
         return usersWithSameInterest;
     }
     
-    /**
-     * Read posts from a text file and create a list of Post objects 
-     * @param filepath
-     * @return a mapping from post id to a map of LikedPost objects  
-     */
      
     @Override
     public Map<Integer, List<LikedPost>> loadPosts(String filepath) {
@@ -370,10 +364,10 @@ public class SocialNetwork implements ISocialNetwork {
         return res;
     }
      
-     
+
 
     @Override
-    public Map<Integer, List<LikedPost>> clusterUserByPost(Map<Integer, List<LikedPost>> posts) {
+    public Map<Integer, List<LikedPost>> postByUser(Map<Integer, List<LikedPost>> posts) {
         Map<Integer, List<LikedPost>> res = new HashMap<>(); 
         for (Map.Entry<Integer, List<LikedPost>> post: posts.entrySet()) {
             List<LikedPost> likes = post.getValue(); 
@@ -392,14 +386,8 @@ public class SocialNetwork implements ISocialNetwork {
         return res;
     }
 
-     /**
-      * posts that my friends recently liked within the given timeFrame 
-      * @param timeFrame: only get friends' activities within this timeframe 
-      * @param userId: 
-      * @return a list of post IDs ordered by the timeStamp of friends liking them 
-      */
     @Override
-    public List<Integer> recommendPost(int userId, Instant earliest, 
+    public Map<Integer, List<Integer>> recommendPost(int userId, Instant earliest, 
                                          Map<Integer, List<LikedPost>> likedPosts) {
         List<LikedPost> posts = new ArrayList<>(); 
         int[] neighbors = this.graph.neighbors(userId); 
@@ -416,9 +404,12 @@ public class SocialNetwork implements ISocialNetwork {
         }
          
         Collections.sort(posts);                    // sort posts by reversed time of liking 
-        List<Integer> res = new ArrayList<>(); 
-        for (LikedPost post : posts) {              // only add post ids into result 
-            res.add(post.getPostId()); 
+        Map<Integer, List<Integer>> res = new HashMap<>(); 
+        for (LikedPost post : posts) {              // only add post ids into result
+            if (!res.containsKey(post.getPostId())) {
+                res.put(post.getPostId(), new ArrayList<Integer>());
+            }
+            res.get(post.getPostId()).add(post.getUserId()); 
         }
         return res;
     }
