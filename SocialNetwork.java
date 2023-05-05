@@ -1,161 +1,199 @@
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Scanner;
 
 public class SocialNetwork implements ISocialNetwork {
-    private Graph graph; 
-    /**
-    * Read posts from a text file and create a list of Post objects 
-    * @param filepath
-    * @return a mapping from post id to a map of LikedPost objects  
-    */
-    
-    // 0=[428 & 2023-01-02T17:03:49.461645Z, 1726 - 2023-01-17T06:21:49.464347Z, 4236 - 2023-01-17T00:21:49.464393Z, 2524 - 2022-11-10T06:03:49.464396Z, 4937 - 2023-03-10T05:15:49.464397Z, 4196 - 2023-04-29T11:36:49.464399Z, 1918 - 2023-02-25T22:30:49.464401Z,
-    @Override
-    public Map<Integer, List<LikedPost>> loadPosts(String filepath) {
-        Map<Integer, List<LikedPost>> res = new HashMap<>(); 
-        File f = new File(filepath); 
-        try {
-            BufferedReader br = new BufferedReader(new FileReader(f));
-            String line; 
-            do {
-                
-                line = br.readLine(); 
-                line = line.substring(0, line.length()-1);
-                String[] kv = line.split("=[");
-                int postId = Integer.valueOf(kv[0]); 
-                res.put(postId, new ArrayList<>());
-                
-                String[] likes = kv[1].split(",");
-                for (String like : likes) {
-                    String[] tokens = like.split("&");
-                    int userId = Integer.valueOf(tokens[0]);
-                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-                    LocalDateTime localDateTime = LocalDateTime.parse(tokens[1], formatter);
-                    Instant instant = localDateTime.toInstant(ZoneOffset.UTC);
-                    res.get(postId).add(new LikedPost(postId, userId, instant));
-                }
-            } while (line != null); 
-            br.close(); 
-        } catch (IOException e) {
-            e.printStackTrace();
+  private Graph graph;
+  private int nNodes;
+
+  public SocialNetwork(boolean load) {
+    if(load) {
+      loadGraphFromDataSet("src/socfb-American75.mtx");
+    }
+  }
+
+  /**
+   * Create a graph representation of the dataset. The first line of the file
+   * contains the number of nodes. Keep in mind that the vertex with id 0 is
+   * not actually considered present in your final graph!
+   *
+   * @param filePath the path of the data
+   * @return the number of entries (nodes) in the dataset (graph)
+   */
+  @Override
+  public int loadGraphFromDataSet(String filePath) {
+    // Create a File object with the given file path
+    File file = new File(filePath);
+
+    // Initialize a Scanner to read the file
+    Scanner scanner = null;
+    try {
+      scanner = new Scanner(file);
+    } catch (FileNotFoundException e) {
+      // If the file is not found, return -1 indicating an error
+      return -1;
+    }
+
+    // Read the number of nodes and edges from the file
+    int numNodes = scanner.nextInt() + 1;
+    int numEdges = scanner.nextInt();
+
+    // Create a new instance of the GraphL class
+    this.graph = new GraphL();
+    this.graph.init(numNodes);
+
+    // Iterate over the edges and add them to the graph
+    for (int i = 0; i < numEdges; ++i) {
+      int from = scanner.nextInt();
+      int to = scanner.nextInt();
+
+      // Skip adding the edge if the destination is 0
+      if (to == 0) {
+        continue;
+      }
+
+      // Read the weight of the edge and convert it to an integer
+      double weight = scanner.nextDouble();
+
+      // Add edges in both directions with the weight (multiplied by 100)
+      this.graph.addEdge(from, to, (int) (weight * 100));
+      this.graph.addEdge(to, from, (int) (weight * 100));
+    }
+
+    // Close the scanner
+    scanner.close();
+
+    // Count the number of nodes in the graph by checking the non-empty neighbors
+    this.nNodes = 0;
+    for (int i = 1; i < graph.nodeCount(); ++i) {
+      if (graph.neighbors(i).length > 0) {
+        this.nNodes++;
+      }
+    }
+
+    // Return the number of nodes in the graph
+    return this.nNodes;
+  }
+
+
+  @Override
+  public int getShortestPathUnweighted(User user1, User user2) {
+    // Get the node IDs of user1 and user2
+    int nodeId1 = user1.getNodeId();
+    int nodeId2 = user2.getNodeId();
+
+    // Initialize a set to keep track of visited nodes
+    HashSet<Integer> visited = new HashSet<>();
+
+    // Initialize a queue to store nodes to visit
+    ArrayList<Integer> nodeQueue = new ArrayList<>();
+
+    // Add the starting node (nodeId1) to the queue and mark it as visited
+    nodeQueue.add(nodeId1);
+    visited.add(nodeId1);
+
+    // Initialize the distance variable
+    int distance = 0;
+
+    // Perform breadth-first search to find the shortest path
+    while (nodeQueue.size() > 0) {
+      // Create a list to store nodes at the same distance from the starting node
+      ArrayList<Integer> nodesInTheSameDistance = new ArrayList<>();
+
+      // Process nodes at the current distance level
+      while (nodeQueue.size() > 0) {
+        // Remove a node from the queue
+        int removed = nodeQueue.remove(0);
+
+        // If the removed node is the target node (nodeId2), exit the loop
+        if (removed == nodeId2) {
+          break;
         }
-        
-        
-        return res;
-    }
-    
-    
-    
-    /**
-     * map from all posts to posts each user liked 
-     * @param posts map returned from loadPosts 
-     * @return a mapping from user to a list of posts (represented by postIds) they liked;  
-     *         the list is ordered by the timestamp that this user liked the post 
-     */
 
-    @Override
-    public Map<Integer, List<LikedPost>> clusterUserByPost(Map<Integer, List<LikedPost>> posts) {
-        Map<Integer, List<LikedPost>> res = new HashMap<>(); 
-        for (Map.Entry<Integer, List<LikedPost>> post: posts.entrySet()) {
-            List<LikedPost> likes = post.getValue(); 
-            for (LikedPost like : likes) {
-               int userId = like.getUserId(); 
-               if (!res.containsKey(userId)) { // create list if user does not exist 
-                   res.put(userId, new ArrayList<LikedPost>());
-               } 
-               res.get(userId).add(like); // add LikedPost object to existing class
-            }
+        // Add the removed node to the list of nodes at the same distance
+        nodesInTheSameDistance.add(removed);
+      }
+
+      // Process the nodes at the same distance level
+      for (int node : nodesInTheSameDistance) {
+        // Get the neighbors of the current node
+        int[] neighbors = graph.neighbors(node);
+
+        // Iterate over the neighbors
+        for (int i = 0; i < neighbors.length; i++) {
+          int neighbor = neighbors[i];
+
+          // If the neighbor has not been visited, add it to the queue and mark it as visited
+          if (!visited.contains(neighbor)) {
+            nodeQueue.add(neighbor);
+            visited.add(neighbor);
+          }
         }
-        for (Map.Entry<Integer, List<LikedPost>> likes : res.entrySet()) {
-            Collections.sort(likes.getValue()); // sort each user's liked posts by reversed time order 
+      }
+
+      // Increment the distance as we move to the next level
+      distance++;
+    }
+
+    // Return the shortest distance between the two nodes
+    return distance;
+  }
+
+
+  @Override
+  public List<Integer> recommendationByDistance(int dist, int userId) {
+    // Initialize a list to keep track of visited nodes
+    ArrayList<Integer> visited = new ArrayList<>();
+
+    // Initialize a queue to store nodes to visit
+    ArrayList<Integer> nodeQueue = new ArrayList<>();
+
+    // Add the starting user ID to the queue and mark it as visited
+    nodeQueue.add(userId);
+    visited.add(userId);
+
+    // Initialize the current distance variable
+    int current_distance = 1;
+
+    // Perform breadth-first search up to the given distance
+    while (nodeQueue.size() > 0 && current_distance < dist) {
+      // Create a list to store nodes at the same distance from the starting user
+      ArrayList<Integer> nodesInTheSameDistance = new ArrayList<>();
+
+      // Process nodes at the current distance level
+      while (nodeQueue.size() > 0) {
+        // Remove a node from the queue
+        int removed = nodeQueue.remove(0);
+
+        // Add the removed node to the list of nodes at the same distance
+        nodesInTheSameDistance.add(removed);
+      }
+
+      // Process the nodes at the same distance level
+      for (int node : nodesInTheSameDistance) {
+        // Get the neighbors of the current node
+        int[] neighbors = graph.neighbors(node);
+
+        // Iterate over the neighbors
+        for (int i = 0; i < neighbors.length; i++) {
+          int neighbor = neighbors[i];
+
+          // If the neighbor has not been visited, add it to the queue and mark it as visited
+          if (!visited.contains(neighbor)) {
+            nodeQueue.add(neighbor);
+            visited.add(neighbor);
+          }
         }
-        return res;
+      }
+
+      // Increment the current distance as we move to the next level
+      current_distance++;
     }
 
-    /**
-     * posts that my friends recently liked within the given timeFrame 
-     * @param timeFrame: only get friends' activities within this timeframe 
-     * @param userId: 
-     * @return a list of post IDs ordered by the timeStamp of friends liking them 
-     */
-    @Override
-    public List<Integer> recommendPost(int userId, Instant earliest, 
-                                        Map<Integer, List<LikedPost>> likedPosts) {
-        List<LikedPost> posts = new ArrayList<>(); 
-        int[] neighbors = this.graph.neighbors(userId); 
-        for (int neigh : neighbors) {
-            List<LikedPost> likes = likedPosts.get(neigh); 
-            for (LikedPost like : likes) {
-                if (like.getTimestamp().compareTo(earliest) > 0) { // only get posts within timeframe 
-                    posts.add(like);
-                } else {
-                    break; 
-                }
-            }
-        }
-        
-        Collections.sort(posts);                    // sort posts by reversed time of liking 
-        List<Integer> res = new ArrayList<>(); 
-        for (LikedPost post : posts) {              // only add post ids into result 
-            res.add(post.getPostId()); 
-        }
-        return res;
-    }
-
-    @Override
-    public int loadGraphFromDataSet(String filePath) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public int getShortestPathUnweighted(int user1, int user2) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public List<Integer> recommendationByDistance(int distance, int userId) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Map<Integer, List<Integer>> loadUserInterests(String filepath) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    
-    @Override
-    public Map<Integer, List<Integer>> clusterUserByInterest(Map<Integer, List<Integer>> interestMap) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    
-    @Override
-    public List<Integer> getUsersInterestCluster(int interestID) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    
-    @Override
-    public List<Integer> recommendationByInterest(int interestId, int userId) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
+    // Return the list of visited nodes within the specified distance
+    return visited;
+  }
 }
