@@ -296,10 +296,10 @@ public class SocialNetwork implements ISocialNetwork {
 
     @Override
     public List<Integer> getUsersInterestCluster(
-            int interestID, Map<Integer, List<Integer>> interestMap) {
+            int interestID, Map<Integer, List<Integer>> clusteredUsers) {
         // If the interestMap contains the given interestID, return the associated list of user IDs
-        if (interestMap.containsKey(interestID)) {
-            return interestMap.get(interestID);
+        if (clusteredUsers.containsKey(interestID)) {
+            return clusteredUsers.get(interestID);
         }
 
         // If the interestID does not exist in the interestMap, return an empty list
@@ -309,9 +309,9 @@ public class SocialNetwork implements ISocialNetwork {
 
     @Override
     public List<Integer> recommendationByInterest(
-            int interestId, int userId, Map<Integer, List<Integer>> interestMap) {
+            int interestId, int userId, Map<Integer, List<Integer>> clusteredUsers) {
         // Get a list of user IDs associated with the specified interest cluster
-        List<Integer> usersWithSameInterest = interestMap.get(interestId);
+        List<Integer> usersWithSameInterest = clusteredUsers.get(interestId);
 
         // Create a map to store the shortest unweighted path between each user and the given user
         Map<Integer, Integer> distanceByUser = new HashMap<>();

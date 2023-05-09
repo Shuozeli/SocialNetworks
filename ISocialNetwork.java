@@ -57,13 +57,13 @@ public interface ISocialNetwork {
      *  associated with that interest. Otherwise, it returns an
      *  empty list.
      * @param interestID - the ID of the interest cluster to retrieve
-     * @param interestMap -
-     *       a Map where the keys are user IDs and the values are Lists of interest IDs
+     * @param clusteredUsers -
+     *       a Map where the keys are interest IDs and the values are Lists of user IDs
      * @return a List of user IDs in the specified interest cluster,
      *           or an empty list if the cluster does not exist
      */
     public List<Integer> getUsersInterestCluster(
-                int interestID, Map<Integer, List<Integer>> interestMap);
+                int interestID, Map<Integer, List<Integer>> clusteredUsers);
 
     /**
      * This method recommends users in a specific interest cluster to a given user, 
@@ -76,13 +76,13 @@ public interface ISocialNetwork {
      * and returns the sorted list.
      * @param interestId - the ID of the interest cluster to recommend users from
      * @param userId - the ID of the user to recommend users to
-     * @param interestMap - 
+     * @param clusteredUsers -
      *      a Map where the keys are user IDs and the values are Lists of interest IDs
      * @return a List of user IDs in the specified interest cluster, 
      *      sorted by distance from the given user
      */
     public List<Integer> recommendationByInterest(
-            int interestId, int userId, Map<Integer, List<Integer>> interestMap);
+            int interestId, int userId, Map<Integer, List<Integer>> clusteredUsers);
 
 
     /**
