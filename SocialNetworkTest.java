@@ -110,7 +110,13 @@ public class SocialNetworkTest {
         Map<Integer, List<LikedPost>> res = socialNetwork.postByUser(posts);
         
         long seconds = 180 * 86400; // 180 days 
-        Instant timestamp = Instant.now().minusSeconds(seconds); 
+        LocalDate may5 = LocalDate.of(2023, 5, 5);
+
+         // Convert the LocalDate to an Instant using the system default time zone
+        Instant instant = may5.atStartOfDay(ZoneId.systemDefault()).toInstant();
+        
+        
+        Instant timestamp = instant.minusSeconds(seconds); 
         int size = socialNetwork.recommendPost(2, timestamp, res).keySet().size();
         assertEquals(680, size);
         
