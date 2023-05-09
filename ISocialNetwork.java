@@ -88,14 +88,17 @@ public interface ISocialNetwork {
     /**
      * This method loads posts from file and create LikedPost objects
      * @param filepath
-     * @return mapping from post id to a list of users that liked the post (with timestamp) 
+     * @return mapping from post id to a list of users that liked the post (with timestamp)
      */
     public Map<Integer, List<LikedPost>> loadPosts(String filepath);
 
     /**
-     * This method converts key from post ID to user ID 
-     * @param posts - map returned by loadPosts 
+     * This method converts key from post ID to user ID
+     * @param posts - map returned by loadPosts
      * @return mapping from user id to a list of posts this user liked (with timestamp)
+     * map from InterestId to a list of users
+     * @param posts
+     * @return
      */
     public Map<Integer, List<LikedPost>> postByUser(Map<Integer, List<LikedPost>> posts);
 
